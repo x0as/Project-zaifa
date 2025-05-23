@@ -14,7 +14,11 @@ GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-pro")
+
+# Use the free model (usually "models/gemini-1.0" or "models/gemini-1.0-chat")
+# You can confirm with genai.list_models() if needed
+MODEL_NAME = "models/gemini-1.0-chat"
+model = genai.GenerativeModel(MODEL_NAME)
 
 # Flask app to keep Render happy
 app = Flask(__name__)
@@ -29,7 +33,7 @@ def run_flask():
 
 # Discord bot setup
 intents = discord.Intents.default()
-intents.message_content = True  # Make sure this is enabled in the Discord developer portal!
+intents.message_content = True  # Ensure this is enabled in the Discord developer portal!
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
 
