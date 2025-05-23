@@ -1,10 +1,12 @@
 import os
 import threading
+import traceback
 import discord
 from discord.ext import commands
 from discord import app_commands
 import google.generativeai as genai
 from flask import Flask
+import asyncio
 
 # Environment variables
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
@@ -27,7 +29,7 @@ def run_flask():
 
 # Discord bot setup
 intents = discord.Intents.default()
-intents.message_content = True
+intents.message_content = True  # Make sure this is enabled in the Discord developer portal!
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree
 
@@ -47,20 +49,22 @@ async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
 
-    # Respond only if the bot is mentioned in the message
     if bot.user in message.mentions:
         prompt = f"Reply as a close, supportive, and chill friend. Here's what they said: \"{message.content}\""
-
         try:
-            response = model.generate_content(prompt)
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(None, model.generate_content, prompt)
             reply = response.text.strip()
             await message.channel.send(reply)
         except Exception as e:
             print(f"Error from Gemini API: {e}")
+            traceback.print_exc()
             await message.channel.send("Oops, I had a small brain freeze💔💔")
+    # Allow commands to be processed
+    await bot.process_commands(message)
 
 if __name__ == "__main__":
     # Run Flask in a thread
-    threading.Thread(target=run_flask).start()
+    threading.Thread(target=run_flask, daemon=True).start()
     # Run Discord bot
     bot.run(DISCORD_TOKEN)
