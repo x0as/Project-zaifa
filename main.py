@@ -57,7 +57,7 @@ async def on_message(message: discord.Message):
             await message.channel.send(reply)
         except Exception as e:
             print(f"Error from Gemini API: {e}")
-            await message.channel.send("Oops, I had a small brain freeze 😅")
+            await message.channel.send("Oops, I had a small brain freeze💔💔")
 
 if __name__ == "__main__":
     # Run Flask in a thread
