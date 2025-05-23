@@ -3,12 +3,10 @@ from discord.ext import commands
 from discord import app_commands
 import google.generativeai as genai
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Get environment variables
+DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
 # Gemini Setup
 genai.configure(api_key=GEMINI_API_KEY)
@@ -55,7 +53,7 @@ async def on_message(message: discord.Message):
     if message.channel.id != assigned_channel_id:
         return
 
-    prompt = f"Reply as a close, supportive, and casual friend would. Here's what they said: \"{message.content}\""
+    prompt = f"Reply as a close, supportive, and chill friend. Here's what they said: \"{message.content}\""
 
     try:
         response = model.generate_content(prompt)
