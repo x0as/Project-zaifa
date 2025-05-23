@@ -15,9 +15,16 @@ GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Use the free model (usually "models/gemini-1.0" or "models/gemini-1.0-chat")
-# You can confirm with genai.list_models() if needed
-MODEL_NAME = "models/gemini-1.0-chat"
+# Select the first available model that supports text generation
+def get_first_available_model():
+    for m in genai.list_models():
+        # Try to find a model that supports 'generateContent'
+        if getattr(m, "generation_methods", None):
+            if "generateContent" in m.generation_methods:
+                return m.name
+    raise RuntimeError("No Gemini models with text generation capability found for your API key.")
+
+MODEL_NAME = get_first_available_model()
 model = genai.GenerativeModel(MODEL_NAME)
 
 # Flask app to keep Render happy
