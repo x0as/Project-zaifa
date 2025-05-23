@@ -15,17 +15,24 @@ GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Select the first available model that supports text generation
+# Dynamically select a working model
 def get_first_available_model():
-    for m in genai.list_models():
-        # Try to find a model that supports 'generateContent'
-        if getattr(m, "generation_methods", None):
-            if "generateContent" in m.generation_methods:
-                return m.name
+    models = list(genai.list_models())
+    print("Available models:")
+    for m in models:
+        print(f" - {m.name}, supports: {getattr(m, 'generation_methods', 'N/A')}")
+    for m in models:
+        if getattr(m, "generation_methods", None) and "generateContent" in m.generation_methods:
+            print(f"Using model: {m.name}")
+            return m.name
     raise RuntimeError("No Gemini models with text generation capability found for your API key.")
 
-MODEL_NAME = get_first_available_model()
-model = genai.GenerativeModel(MODEL_NAME)
+try:
+    MODEL_NAME = get_first_available_model()
+    model = genai.GenerativeModel(MODEL_NAME)
+except Exception as e:
+    print(f"Gemini API error: {e}")
+    model = None
 
 # Flask app to keep Render happy
 app = Flask(__name__)
@@ -61,6 +68,9 @@ async def on_message(message: discord.Message):
         return
 
     if bot.user in message.mentions:
+        if model is None:
+            await message.channel.send("Gemini is not available. Please check your API key and available models.")
+            return
         prompt = f"Reply as a close, supportive, and chill friend. Here's what they said: \"{message.content}\""
         try:
             loop = asyncio.get_event_loop()
@@ -71,11 +81,9 @@ async def on_message(message: discord.Message):
             print(f"Error from Gemini API: {e}")
             traceback.print_exc()
             await message.channel.send("Oops, I had a small brain freeze💔💔")
-    # Allow commands to be processed
+            return
     await bot.process_commands(message)
 
 if __name__ == "__main__":
-    # Run Flask in a thread
     threading.Thread(target=run_flask, daemon=True).start()
-    # Run Discord bot
     bot.run(DISCORD_TOKEN)
